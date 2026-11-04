@@ -2025,8 +2025,11 @@ class DocLangFallbackSerializer(BaseFallbackSerializer):
                 head = ""
                 if item.label and item.label != GroupLabel.UNSPECIFIED:
                     head = _create_label_token(value=item.label.value)
+                # DocLang's <group> has no name attribute in its XSD (#748).
+                # Preserve the group wrapper and supported label, not an
+                # invalid attribute that breaks reference XML validation.
                 text_res = (
-                    f"{DocLangVocabulary._create_group_token(name=item.name)}"
+                    f"{DocLangVocabulary._create_group_token()}"
                     f"{head}{text_res}"
                     f"{DocLangVocabulary._create_group_token(closing=True)}"
                 )
