@@ -2979,3 +2979,39 @@ def test_picture_with_nested_field_region():
     assert len(list(root.iter("field_region"))) == 1
     assert root.find("picture/field_region/field_item/key") is not None
     assert root.find("picture/field_region/field_item/value") is not None
+
+
+def test_named_groups_do_not_emit_unsupported_name_attribute():
+    """The DocLang XSD does not define a name attribute for <group> (#748)."""
+    from docling_core.types.doc import GroupLabel
+
+    doc = DoclingDocument(name="test")
+    group = doc.add_group(label=GroupLabel.SECTION, name="Sheet One")
+    doc.add_text(label=DocItemLabel.TEXT, text="Cell content", parent=group)
+
+    xml = serialize_doclang(
+        doc,
+        params=DocLangParams(add_named_groups=True, include_namespace=True),
+    )
+
+    assert "<group>" in xml
+    assert '<label value="section"' in xml
+    assert "<group name=" not in xml
+    assert "Cell content" in xml
+
+
+@doclang_validator
+def test_named_group_output_is_valid_doclang_xml():
+    """Unsupported group attributes must not invalidate a named-group export."""
+    from docling_core.types.doc import GroupLabel
+
+    doc = DoclingDocument(name="test")
+    group = doc.add_group(label=GroupLabel.SECTION, name="Sheet One")
+    doc.add_text(label=DocItemLabel.TEXT, text="Cell content", parent=group)
+
+    xml = serialize_doclang(
+        doc,
+        params=DocLangParams(add_named_groups=True, include_namespace=True),
+    )
+
+    validate_dclg_xml(xml, allow_empty_namespace=False)
